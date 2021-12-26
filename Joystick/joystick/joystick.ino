@@ -1,17 +1,21 @@
-#define joyX A0
-#define joyY A1
-#define joySW 2
+#define joyX 2
+#define joyY 4
+#define joySW 14
+
+volatile byte pressed = false;
 
 int xValue = 0; // variable to store x value
 int yValue = 0; // variable to store y value
 int notPressed = 0; // variable to store the button's state => 1 if not 
 int xMap, yMap;
 
+
 void setup() {
+  Serial.begin(115200); // Setup serial connection for print out to console
+  
   pinMode(joyX, INPUT); // setup x input
   pinMode(joyY, INPUT); // setup y input
   pinMode(joySW, INPUT_PULLUP); // we use a pullup-resistor for the button functionality
-  Serial.begin(9600); // Setup serial connection for print out to console
 }
  
 void loop() {
@@ -34,4 +38,6 @@ void loop() {
   Serial.print(", Not pressed: ");
   Serial.println(notPressed);
   Serial.println();
+
+  delay(500);
 }

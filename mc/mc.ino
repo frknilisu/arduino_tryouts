@@ -1,43 +1,51 @@
-/****************************************************
-FILE:  AMS_5600_example
-
-Author: Tom Denton
-www.ams.com
-Date: 15 Dec 2014
-Version 1.00
-
-Description:  AS5600 "Potuino" demonstration application
-
-AMS5600 Programming Sketch
-/***************************************************/
-
 #include <Wire.h>
 #include "AS5600.h"
+#include "Point.h"
 
 #ifdef ARDUINO_SAMD_VARIANT_COMPLIANCE
-  #define SERIAL SerialUSB
+  #define SERIAL Serial
   #define SYS_VOL   3.3
 #else
   #define SERIAL Serial
   #define SYS_VOL   5
 #endif
 
+#define SDA 21
+#define SCL 22
+
+AMS_5600 ams5600;
+Point pA, pB;
+
 String lastResponse;
 String noMagnetStr = "Error: magnet not detected";
 
-AMS_5600 ams5600;
+int ang, lang = 0;
+int segmentCounter = 0;
+int homeSegment = 0;
+int previousRawSegment = 0;
+int currentRawSegment = 0;
 
-/*******************************************************
-/* function: setup
-/* In: none
-/* Out: none
-/* Description: called by system at startup
-/*******************************************************/
-void setup(){
- SERIAL.begin(115200);
- Wire.begin();
- printMenu();
+void setup() {
+  Wire.begin(SDA, SCL);
+  SERIAL.begin(115200);
+  SERIAL.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> ");
+  while(ams5600.detectMagnet() == 0) {
+    delay(1000);
+  }
+  if(ams5600.detectMagnet() == 1 ){
+      SERIAL.print("Current Magnitude: ");
+      SERIAL.println(ams5600.getMagnitude());
+
+      SERIAL.print("Current Raw Angle: ");
+      homeSegment = ams5600.getRawAngle();
+      SERIAL.println(String(convertRawAngleToDegrees(homeSegment), DEC));
+  }
+  else{
+      SERIAL.println("Can not detect magnet");
+  }
+  printMenu();
 }
+
 
 /*******************************************************
 /* function: printMenu
@@ -48,7 +56,7 @@ void setup(){
 /*******************************************************/
 void printMenu()
 {
-  for(int i =0; i<20;i++)
+  for(int i=0; i<20;i++)
     SERIAL.println();
   SERIAL.println("AS5600 SERIAL Interface Program");
   SERIAL.println("");
@@ -62,6 +70,7 @@ void printMenu()
   SERIAL.print("3 - Set max angle range\t|  ");  SERIAL.println(" 8 - get scaled angle");
   SERIAL.print("4 - Get max angle range\t|  ");  SERIAL.println(" 9 - detect magnet");
   SERIAL.print("5 - Get start position \t\t|  ");     SERIAL.println("10 - get magnet strength");
+  SERIAL.print("11 - Set PointA \t\t|  ");     SERIAL.println("12 - set PointB");
   SERIAL.println();
   SERIAL.print("Number of burns remaining: "); SERIAL.println(String(3 - ams5600.getBurnCount()));
   SERIAL.println("96 - Burn Angle");
@@ -181,15 +190,16 @@ String burnMaxAngleAndConfig()
   return retStr;
 }
 
-/*******************************************************
-/* Function: loop
-/* In: none
-/* Out: none
-/* Description: main program loop
-/*******************************************************/
-void loop()
-{
-
+void loop() {
+  
+  currentRawSegment = ams5600.getRawAngle();
+  if((previousRawSegment >= 0 && previousRawSegment < 256) && (currentRawSegment >= 3840 && currentRawSegment < 4096)) {
+    --segmentCounter;
+  } else if((previousRawSegment >= 3840 && previousRawSegment < 4096) && (currentRawSegment >= 0 && currentRawSegment < 256)) {
+    ++segmentCounter;
+  }
+  previousRawSegment = currentRawSegment;
+  
   if (SERIAL.available() > 0)
   {
     char incomingByteBuffer[5] = {0};
@@ -214,39 +224,6 @@ void loop()
 
     switch (incomingByte)
     {
-      case 1:
-      {
-        if(ams5600.detectMagnet()==1)
-          lastResponse = ("Start angle set to = "+String(convertRawAngleToDegrees(ams5600.setStartPosition()), DEC));  //Print Raw Angle Value
-        else
-          lastResponse = noMagnetStr;
-      }
-      break;
-
-      case 2:
-      {
-        if(ams5600.detectMagnet()==1)
-          lastResponse = ("End angle set to = "+String(convertRawAngleToDegrees(ams5600.setEndPosition()), DEC));
-        else
-          lastResponse = noMagnetStr;
-      }
-      break;
-
-      case 3:
-      {
-        if(ams5600.detectMagnet()==1)
-          lastResponse = ("Max angle range set to = "+String(convertRawAngleToDegrees(ams5600.setMaxAngle()), DEC));
-        else
-          lastResponse = noMagnetStr;
-      }
-      break;
-
-      case 4:
-      {
-        lastResponse = ("Max angle range= "+String(convertRawAngleToDegrees(ams5600.getMaxAngle()), DEC));
-      }
-      break;
-
       case 5:
       {
         lastResponse = ("Start angle = "+String(convertRawAngleToDegrees(ams5600.getStartPosition()), DEC));
@@ -271,46 +248,32 @@ void loop()
       }
       break;
 
-      case 9:
+      case 11:
       {
-        if(ams5600.detectMagnet()==1)
-          lastResponse = "Magnet detected";
-        else
-          lastResponse = noMagnetStr;
+        currentRawSegment = ams5600.getRawAngle();
+        pA.setRemainder(currentRawSegment);
+        pA.setSegment(segmentCounter);
+
+        lastResponse = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
+                        "Point A - Segment Counter: " + String(segmentCounter);
       }
       break;
 
-      case 10:
+      case 12:
       {
-        lastResponse = "Magnet strength ";
-        if(ams5600.detectMagnet()==1)
-        {
-          int magStrength = ams5600.getMagnetStrength();
+        currentRawSegment = ams5600.getRawAngle();
+        pB.setRemainder(currentRawSegment);
+        pB.setSegment(segmentCounter);
 
-          if(magStrength == 1)
-            lastResponse += "is weak";
-          else if(magStrength == 2){
-            lastResponse += "is acceptable";
-            SERIAL.print("Current Magnitude: ");
-            SERIAL.println(ams5600.getMagnitude());
-          }
-          else if (magStrength == 3)
-            lastResponse += "is to strong";
-        }
-        else
-          lastResponse = noMagnetStr;
+        lastResponse = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
+                        "Point B - Segment Counter: " + String(segmentCounter);
       }
       break;
 
-      case 96:
+      case 13:
       {
-          lastResponse = burnAngle();
-      }
-      break;
-
-      case 98:
-      {
-          lastResponse = burnMaxAngleAndConfig();
+        lastResponse = "Current Segment: " + String(currentRawSegment) + "\n" + \
+                        "Segment Counter: " + String(segmentCounter);
       }
       break;
 
@@ -323,4 +286,5 @@ void loop()
     /*end of menu processing */
     printMenu();
   }
+  delay(200);
 }

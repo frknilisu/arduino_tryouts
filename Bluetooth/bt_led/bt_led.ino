@@ -9,7 +9,7 @@ char Incoming_value = 0;                //Variable for storing Incoming_value
 const int ledPin = LED_BUILTIN;
 void setup() 
 {
-  Serial.begin(9600);         //Sets the data rate in bits per second (baud) for serial data transmission
+  Serial.begin(115200);         //Sets the data rate in bits per second (baud) for serial data transmission
   pinMode(ledPin, OUTPUT);        //Sets digital pin 13 as output pin
 }
 

@@ -17,7 +17,7 @@ AccelStepper stepper = AccelStepper(MotorInterfaceType, stepPin, dirPin);
 int xMap, yMap, xValue, yValue;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
   
   // Set the maximum steps per second:
   stepper.setMaxSpeed(1000);

@@ -8,7 +8,7 @@ BLEStringCharacteristic greetingCharacteristic("2A56",  // standard 16-bit chara
     BLERead, 13); // remote clients will only be able to read this
 
 void setup() {
-  Serial.begin(9600);    // initialize serial communication
+  Serial.begin(115200);    // initialize serial communication
   while (!Serial);
 
   pinMode(LED_BUILTIN, OUTPUT); // initialize the built-in LED pin
