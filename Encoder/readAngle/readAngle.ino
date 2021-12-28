@@ -1,12 +1,8 @@
 #include <Wire.h>
 #include "AS5600.h"
-#ifdef ARDUINO_SAMD_VARIANT_COMPLIANCE
-  #define SERIAL SerialUSB
-  #define SYS_VOL   3.3
-#else
-  #define SERIAL Serial
-  #define SYS_VOL   5
-#endif
+
+#define SDA 21
+#define SCL 22
 
 AMS_5600 ams5600;
 
@@ -14,18 +10,18 @@ int ang, lang = 0;
 
 void setup()
 {
-  SERIAL.begin(115200);
-  Wire.begin();
-  SERIAL.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> ");
+  Serial.begin(115200);
+  Wire.begin(SDA, SCL);
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> ");
   while(ams5600.detectMagnet() == 0) {
     delay(1000);
   }
   if(ams5600.detectMagnet() == 1 ){
-      SERIAL.print("Current Magnitude: ");
-      SERIAL.println(ams5600.getMagnitude());
+      Serial.print("Current Magnitude: ");
+      Serial.println(ams5600.getMagnitude());
   }
   else{
-      SERIAL.println("Can not detect magnet");
+      Serial.println("Can not detect magnet");
   }
 }
 /*******************************************************
@@ -44,5 +40,5 @@ float convertRawAngleToDegrees(word newAngle)
 }
 void loop()
 {
-    SERIAL.println(String(convertRawAngleToDegrees(ams5600.getRawAngle()),DEC));
+    Serial.println(String(convertRawAngleToDegrees(ams5600.getRawAngle()),DEC));
 }
