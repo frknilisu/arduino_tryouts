@@ -36,6 +36,9 @@ bool startProgramming = false;
 bool setA = false;
 bool setB = false;
 
+int ang, lang = 0;
+volatile bool readIt = false;
+
 enum BLEMsgsEnum {
     msg_StartProgramming,
     msg_StopProgramming,
@@ -72,7 +75,7 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
       if (value.length() > 0) {
         Serial.println("*********");
         Serial.print("New value: ");
-        Serial.print(value);
+        //Serial.print(value);
         Serial.println();
         Serial.println("*********");
         
@@ -148,6 +151,13 @@ void InitBLE() {
   pAdvertising->start();
 }
 
+float convertRawAngleToDegrees(word newAngle) {
+  /* Raw data reports 0 - 4095 segments, which is 0.087 of a degree */
+  float retVal = newAngle * 0.087;
+  ang = retVal;
+  return ang;
+}
+
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
@@ -169,9 +179,34 @@ void TaskBLEAdvertise(void *pvParameters)  // This is a task.
   }
 }
 
+void TaskReadEncoder(void *pvParameters)
+{
+  (void) pvParameters;
+  
+  Wire.begin(SDA, SCL);
+  Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>> ");
+  Serial.println("Read Encoder");
+  while(ams5600.detectMagnet() == 0) {
+    delay(1000);
+  }
+  if(ams5600.detectMagnet() == 1 ){
+    Serial.print("Current Magnitude: ");
+    Serial.println(ams5600.getMagnitude());
+  }
+  else{
+    Serial.println("Can not detect magnet");
+  }
+  //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
+  const TickType_t xDelay = 100;
+  for (;;)
+  {
+    Serial.println(ams5600.getRawAngle());      
+    vTaskDelay(xDelay);
+  }
+}
+
 void setup() {
   Serial.begin(115200);
-  Wire.begin(SDA, SCL);
   
   // Now set up two tasks to run independently.
   xTaskCreatePinnedToCore(
@@ -182,6 +217,16 @@ void setup() {
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL 
     ,  ARDUINO_RUNNING_CORE);
+
+  xTaskCreatePinnedToCore(
+    TaskReadEncoder
+    ,  "TaskReadEncoder"
+    ,  2048  // Stack size
+    ,  NULL
+    ,  1  // Priority
+    ,  NULL 
+    ,  ARDUINO_RUNNING_CORE);
+  
 }
 
 void loop() {
