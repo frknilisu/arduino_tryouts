@@ -5,6 +5,8 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+#include <AccelStepper.h>
+
 #include "AS5600.h"
 #include "Point.h"
 #include "Pair.h"
@@ -22,6 +24,11 @@
 #define joyY 4
 #define joySW 14
 
+// Define the AccelStepper interface type
+#define MotorInterfaceType AccelStepper::DRIVER
+#define dirPin 2
+#define stepPin 3
+
 #define ENCODER_RESOLUTION  12
 #define MOTOR_RESOLUTION    1/8
 
@@ -31,6 +38,8 @@
 #define SERVICE_UUID_UART      "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+
+AccelStepper stepper;
 
 AMS_5600 ams5600;
 Point pA, pB;
@@ -142,6 +151,8 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
 /*---------------------- Utility Functions ---------------------*/
 /*--------------------------------------------------------------*/
 void InitBLE() {
+  Serial.println(">>>>>>>> Init BLE >>>>>>>>");
+  
   BLEDevice::init("MyESP32 BLE");
   
   // Create the BLE Server
@@ -172,16 +183,28 @@ void InitBLE() {
   // Start advertising
   pServer->getAdvertising()->start();
   Serial.println("Waiting a client connection to notify...");
+}
 
-  /*
-  BLEAdvertising *pAdvertising = pServer->getAdvertising();
-  pAdvertising->addServiceUUID(pService->getUUID());
-  pAdvertising->setScanResponse(false);
-  pAdvertising->setMinPreferred(0x0);
+void InitEncoder() {
+  Serial.println(">>>>>>>> Init Encoder >>>>>>>>");
   
-  // Start advertising
-  pAdvertising->start();
-  */
+  Wire.begin(SDA, SCL);
+  while(ams5600.detectMagnet() == 0) {
+    delay(1000);
+  }
+  if(ams5600.detectMagnet() == 1 ) {
+    Serial.print("Current Magnitude: ");
+    Serial.println(ams5600.getMagnitude());
+  } else {
+    Serial.println("Can not detect magnet");
+  }
+}
+
+void InitMotor() {
+  Serial.println(">>>>>>>> Init Motor >>>>>>>>");
+  
+  stepper = AccelStepper(MotorInterfaceType, stepPin, dirPin);
+  stepper.setMaxSpeed(1000);
 }
 
 void notifyEncoder() {
@@ -266,18 +289,11 @@ void TaskBLE(void *pvParameters) {
 
 void TaskReadEncoder(void *pvParameters) {
   (void) pvParameters;
+
+  Serial.println("Starting Encoder Reading Task...");
+
+  InitEncoder();
   
-  Wire.begin(SDA, SCL);
-  Serial.println(">>>>>>>> Read Encoder >>>>>>>>");
-  while(ams5600.detectMagnet() == 0) {
-    delay(1000);
-  }
-  if(ams5600.detectMagnet() == 1 ) {
-    Serial.print("Current Magnitude: ");
-    Serial.println(ams5600.getMagnitude());
-  } else {
-    Serial.println("Can not detect magnet");
-  }
   //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
   const TickType_t xDelay = 100;
   for (;;)
@@ -285,6 +301,25 @@ void TaskReadEncoder(void *pvParameters) {
     currentRawSegment = ams5600.getRawAngle();
     checkSegment();
     previousRawSegment = currentRawSegment;
+    vTaskDelay(xDelay);
+  }
+}
+
+void TaskDriveMotor(void *pvParameters) {
+  (void) pvParameters;
+
+  Serial.println("Starting Motor Drıvıng Task...");
+
+  InitMotor();
+  
+  //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
+  const TickType_t xDelay = 100;
+  for (;;)
+  {
+    // Set the speed of the motor in steps per second:
+    stepper.setSpeed(150);
+    // Step the motor with constant speed as set by setSpeed():
+    stepper.runSpeed();
     vTaskDelay(xDelay);
   }
 }
@@ -301,7 +336,7 @@ void setup() {
     ,  "TaskBLE"
     ,  2048
     ,  NULL
-    ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
 
@@ -310,7 +345,17 @@ void setup() {
     ,  "TaskReadEncoder"
     ,  2048  // Stack size
     ,  NULL
-    ,  1  // Priority
+    ,  2  // Priority
+    ,  NULL
+    ,  ARDUINO_RUNNING_CORE);
+
+
+  xTaskCreatePinnedToCore(
+    TaskDriveMotor
+    ,  "TaskDriveMotor"
+    ,  2048  // Stack size
+    ,  NULL
+    ,  3  // Priority
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
 }
