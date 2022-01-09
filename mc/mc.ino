@@ -52,7 +52,7 @@ volatile bool readIt = false;
 
 enum BLEMsgsEnum {
   msg_StartProgramming,
-  msg_StopProgramming,
+  msg_FinishProgramming,
   msg_SetA,
   msg_SetB
 };
@@ -96,7 +96,7 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
             Serial.println("-- startProgramming --");
             startProgramming = true;
             break;
-          case BLEMsgsEnum::msg_StopProgramming:
+          case BLEMsgsEnum::msg_FinishProgramming:
             Serial.println("-- stopProgramming --");
             startProgramming = false;
             break;
@@ -112,7 +112,7 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
             
             setA = true;
             break;
-          case msg_SetB:
+          case BLEMsgsEnum::msg_SetB:
             Serial.println("-- setB --");
             
             currentRawSegment = ams5600.getRawAngle();
