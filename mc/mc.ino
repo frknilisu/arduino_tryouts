@@ -7,6 +7,7 @@
 
 #include "AS5600.h"
 #include "Point.h"
+#include "Pair.h"
 
 #if CONFIG_FREERTOS_UNICORE
 #define ARDUINO_RUNNING_CORE 0
@@ -20,6 +21,9 @@
 #define joyX 2
 #define joyY 4
 #define joySW 14
+
+#define ENCODER_RESOLUTION  12
+#define MOTOR_RESOLUTION    1/8
 
 #define SERVICE_UUID_ENCODER        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID_ENCODER "33d14ca1-1ba0-4247-bb85-0ea4504eb03d"
@@ -50,7 +54,12 @@ bool setA = false;
 bool setB = false;
 volatile bool readIt = false;
 
-enum BLEMsgsEnum {
+enum class DIRECTION {
+  CW = 1,
+  CCW = -1
+};
+
+enum class BLEMsgsEnum {
   msg_StartProgramming,
   msg_FinishProgramming,
   msg_SetA,
@@ -97,7 +106,7 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
             startProgramming = true;
             break;
           case BLEMsgsEnum::msg_FinishProgramming:
-            Serial.println("-- stopProgramming --");
+            Serial.println("-- finishProgramming --");
             startProgramming = false;
             break;
           case BLEMsgsEnum::msg_SetA:
@@ -192,6 +201,36 @@ void checkSegment() {
   }
 }
 
+Pair<DIRECTION, int> pointDiffOnSameSegment(const Point& p1, const Point& p2) {
+  int rawRemainderDiff = p2.getRemainder() - p1.getRemainder();
+  DIRECTION dir = rawRemainderDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW;
+  return Pair<DIRECTION, int>(dir, rawRemainderDiff);
+}
+
+int pair2StepDiff(Pair<DIRECTION, int> tempPointDiff) {
+  return int(tempPointDiff.first()) * tempPointDiff.second();
+}
+
+Pair<DIRECTION, int> step2PairDiff(int encoderStepDiff) {
+  return Pair<DIRECTION, int>(encoderStepDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW, abs(encoderStepDiff));
+}
+
+Pair<DIRECTION, int> pointDiffOnDifferentSegment(const Point& p1, const Point& p2) {
+  if(p1.getSegment() == p2.getSegment())
+    return pointDiffOnSameSegment(p1, p2);
+  
+  int rawSegmentDiff = p2.getSegment() - p1.getSegment();
+  int encoderStepDiff = 2^ENCODER_RESOLUTION * rawSegmentDiff;
+  Pair<DIRECTION, int> tempPointDiff = pointDiffOnSameSegment(Point(p2.getSegment(), p1.getRemainder()), p2);
+  int tempStepDiff = pair2StepDiff(tempPointDiff); 
+  encoderStepDiff += tempStepDiff;
+  return step2PairDiff(encoderStepDiff);
+}
+
+int convertEncoderToMotorStep (int encoderStep) {
+  return round(encoderStep * (2^ENCODER_RESOLUTION / (200 / MOTOR_RESOLUTION)));
+}
+
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
@@ -233,11 +272,10 @@ void TaskReadEncoder(void *pvParameters) {
   while(ams5600.detectMagnet() == 0) {
     delay(1000);
   }
-  if(ams5600.detectMagnet() == 1 ){
+  if(ams5600.detectMagnet() == 1 ) {
     Serial.print("Current Magnitude: ");
     Serial.println(ams5600.getMagnitude());
-  }
-  else{
+  } else {
     Serial.println("Can not detect magnet");
   }
   //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;

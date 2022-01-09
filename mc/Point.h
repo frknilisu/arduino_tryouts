@@ -6,6 +6,9 @@
 class Point {
   public:
     Point();
+    Point(int segment, int remainder);
+    int getSegment() const;
+    int getRemainder() const;
     void setSegment(int segment);
     void setRemainder(int remainder);
     
