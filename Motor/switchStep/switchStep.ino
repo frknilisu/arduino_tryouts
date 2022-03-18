@@ -10,12 +10,12 @@
 #include <AccelStepper.h>
 
 // Define stepper motor connections and motor interface type. Motor interface type must be set to 1 when using a driver:
-#define dirPin 2
-#define stepPin 3
-#define MS0 6
-#define MS1 5
-#define MS2 4
-#define enablePin 8
+#define dirPin 26
+#define stepPin 25
+#define MS0 27
+#define MS1 16
+#define MS2 17
+#define enablePin 12
 #define motorInterfaceType 1
 
 // Create a new instance of the AccelStepper class:
@@ -32,7 +32,7 @@ AccelStepper stepper = AccelStepper(motorInterfaceType, stepPin, dirPin);
 
 
 #define Slider_Pin A0    // Arduino A0 Pin connected to the analog out of the Slider
-#define change_switch 7    // Tact switch used to select stepping type
+#define change_switch 14    // Tact switch used to select stepping type
 
 int change_switch_state=0;  // used to debounce the switch
 

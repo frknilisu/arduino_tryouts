@@ -40,5 +40,6 @@ float convertRawAngleToDegrees(word newAngle)
 }
 void loop()
 {
-    Serial.println(String(convertRawAngleToDegrees(ams5600.getRawAngle()),DEC));
+    //Serial.println(String(convertRawAngleToDegrees(ams5600.getRawAngle()), DEC));
+    Serial.println(ams5600.getRawAngle());
 }

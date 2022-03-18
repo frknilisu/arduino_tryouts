@@ -10,8 +10,8 @@
 // Define the AccelStepper interface type
 #define MotorInterfaceType AccelStepper::DRIVER
 // #define MotorInterfaceType AccelStepper::HALF4WIRE
-#define dirPin 2
-#define stepPin 3
+#define dirPin 26
+#define stepPin 25
 
 // Initialize with pin sequence IN1-IN3-IN2-IN4 for using the AccelStepper library with 28BYJ-48 stepper motor:
 // AccelStepper stepper = AccelStepper(MotorInterfaceType, motorPin1, motorPin3, motorPin2, motorPin4);

@@ -10,34 +10,7 @@
 #include "AS5600.h"
 #include "Point.h"
 #include "Pair.h"
-
-#if CONFIG_FREERTOS_UNICORE
-#define ARDUINO_RUNNING_CORE 0
-#else
-#define ARDUINO_RUNNING_CORE 1
-#endif
-
-#define SDA 21
-#define SCL 22
-
-#define joyX 2
-#define joyY 4
-#define joySW 14
-
-// Define the AccelStepper interface type
-#define MotorInterfaceType AccelStepper::DRIVER
-#define dirPin 2
-#define stepPin 3
-
-#define ENCODER_RESOLUTION  12
-#define MOTOR_RESOLUTION    1/8
-
-#define SERVICE_UUID_ENCODER        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-#define CHARACTERISTIC_UUID_ENCODER "33d14ca1-1ba0-4247-bb85-0ea4504eb03d"
-
-#define SERVICE_UUID_UART      "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
-#define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
+#include "Pins.h"
 
 AccelStepper stepper;
 
@@ -223,7 +196,7 @@ void checkSegment() {
     Serial.println("segment counter is decreased: " + String(segmentCounter));
   }
 }
-
+/*
 Pair<DIRECTION, int> pointDiffOnSameSegment(const Point& p1, const Point& p2) {
   int rawRemainderDiff = p2.getRemainder() - p1.getRemainder();
   DIRECTION dir = rawRemainderDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW;
@@ -253,6 +226,7 @@ Pair<DIRECTION, int> pointDiffOnDifferentSegment(const Point& p1, const Point& p
 int convertEncoderToMotorStep (int encoderStep) {
   return round(encoderStep * (2^ENCODER_RESOLUTION / (200 / MOTOR_RESOLUTION)));
 }
+*/
 
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
