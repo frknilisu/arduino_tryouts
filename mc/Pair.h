@@ -1,5 +1,5 @@
 #ifndef PAIR_H
-#define PAIR_H JUN_2014
+#define PAIR_H
 
 /* Lightweight implementation of STL Pair<> */
 
