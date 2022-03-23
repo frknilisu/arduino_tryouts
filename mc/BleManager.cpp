@@ -34,41 +34,24 @@ void BleManager::handleMsg(std::string receivedMsg) {
   switch(hashit(receivedMsg)) {
     case BLEMsgsEnum::msg_StartProgramming:
       Serial.println("-- Received Msg: startProgramming --");
-      //missionController->startProgramming = true;
+      missionController->setStartProgramming(true);
       break;
     case BLEMsgsEnum::msg_FinishProgramming:
       Serial.println("-- Received Msg: finishProgramming --");
-      //missionController->startProgramming = false;
+      missionController->setStartProgramming(false);
+      missionController->setFinishProgramming(true);
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      /*
-      int currentRawSegment = encoderManager.getCurrentRawSegment();
-      int segmentCounter = encoderManager.getSegmentCounter();
+      int currentRawSegment = encoderManager->getCurrentRawSegment();
+      int segmentCounter = encoderManager->getSegmentCounter();
       missionController->setA(currentRawSegment, segmentCounter);
-      pA.setRemainder(currentRawSegment);
-      pA.setSegment(segmentCounter);
-      
-      lastCout = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
-                 "Point A - Segment Counter: " + String(segmentCounter);
-      
-      setA = true;
-      */
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      /*
-      int currentRawSegment = encoderManager.getCurrentRawSegment();
-      int segmentCounter = encoderManager.getSegmentCounter();
+      int currentRawSegment = encoderManager->getCurrentRawSegment();
+      int segmentCounter = encoderManager->getSegmentCounter();
       missionController->setB(currentRawSegment, segmentCounter);
-      pB.setRemainder(currentRawSegment);
-      pB.setSegment(segmentCounter);
-      
-      lastCout = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
-                 "Point B - Segment Counter: " + String(segmentCounter);
-      
-      setB = true;
-      */
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
@@ -79,6 +62,10 @@ void BleManager::handleMsg(std::string receivedMsg) {
       this->motorManager->setMotorStatus("STOP");
       break;
   }
+}
+
+bool BleManager::isDeviceConnected() {
+  return this->currentState == States::CONNECTED;
 }
 
 /*------------------------------------------------------*/

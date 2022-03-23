@@ -21,6 +21,7 @@ class BleManager {
     void runLoop();
 
     void handleMsg(std::string receivedMsg);
+    bool isDeviceConnected();
   private:
     enum class States {
       INITIALIZING,

@@ -1,50 +1,57 @@
 #include "MissionController.h"
 
-#include "BleManager.h"
+MissionController::MissionController(BleManager* bleManager, EncoderManager* encoderManager, MotorManager* motorManager)
+  : bleManager(bleManager), encoderManager(encoderManager), motorManager(motorManager) {
+  Serial.println(">>>>>>>> MissionController() >>>>>>>>");
+}
 
-Point pA, pB;
-bool startProgramming = false;
-bool finishProgramming = false;
-bool setA = false;
-bool setB = false;
-
-String lastCout;
-int segmentCounter = 0;
-int homeSegment = 0;
-int previousRawSegment = 0;
-int currentRawSegment = 0;
-int ang, lang = 0;
-volatile bool joyPressed = false;
-
-volatile bool readIt = false;
-
-enum class DIRECTION {
-  CW = 1,
-  CCW = -1
-};
-
-MissionController::MissionController(const BleManager& bleManager)
-  : bleManager(bleManager) {
+MissionController::setA(int currentRawSegment, int segmentCounter) {
+  this->pA.setRemainder(currentRawSegment);
+  this->pA.setSegment(segmentCounter);
+      
+  logCout = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
+             "Point A - Segment Counter: " + String(segmentCounter);
   
+  this->isSetA = true;
+}
+
+MissionController::setB(int currentRawSegment, int segmentCounter) {
+  this->pB.setRemainder(currentRawSegment);
+  this->pB.setSegment(segmentCounter);
+      
+  logCout = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
+             "Point B - Segment Counter: " + String(segmentCounter);
+  
+  this->isSetB = true;
+}
+
+MissionController::setStartProgramming(bool start) {
+  this->isStartProgramming = start;
+}
+
+MissionController::setFinishProgramming(bool finish) {
+  this->isFinishProgramming = finish;
 }
 
 void MissionController::runLoop() {
   for(;;)
   {
-    switch(currentState) {
+    switch(this->currentState) {
       case States::MANUAL:
-        if(bleManager.isDeviceConnected() && startProgramming) {
-          currentState = States::PROGRAMMING;
+        if(bleManager->isDeviceConnected() && this->isStartProgramming) {
+          this->currentState = States::PROGRAMMING;
         }
         break;
       case States::PROGRAMMING:
-        if(setA && setB && finishProgramming) {
-          currentState = States::ACTION;
+        if(this->isSetA && this->isSetB && this->isFinishProgramming) {
+          this->currentState = States::ACTION;
         }
         break;
       case States::ACTION:
-        if(encoderManager.isTargetReached() && actionCompleted) {
-          currentState = States::PROGRAMMING;
+        if(encoderManager->isTargetReached() && actionCompleted) {
+          this->currentState = States::PROGRAMMING;
+        } else {
+          this->motorManager->move(this->pA, this->pB);
         }
         break;
       case States::ERROR:

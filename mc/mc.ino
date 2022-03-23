@@ -2,13 +2,14 @@
 #include "BleManager.h"
 #include "EncoderManager.h"
 #include "MotorManager.h"
-//#include "MissionController.h"
+#include "MissionController.h"
 
 String logCout;
 
-EncoderManager* encoderManager;
 BleManager* bleManager;
+EncoderManager* encoderManager;
 MotorManager* motorManager;
+MissionController* missionController;
 
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
@@ -38,7 +39,6 @@ void TaskMotor(void *pvParameters) {
   motorManager->runLoop();
 }
 
-/*
 void TaskMissionControl(void *pvParameters) {
   (void) pvParameters;
 
@@ -46,7 +46,6 @@ void TaskMissionControl(void *pvParameters) {
 
   missionController.runLoop();
 }
-*/
 
 /*--------------------------------------------------*/
 /*---------------------- Main ----------------------*/
@@ -57,6 +56,7 @@ void setup() {
   encoderManager = new EncoderManager();
   motorManager = new MotorManager();
   bleManager = new BleManager(encoderManager, motorManager);
+  missionController = new MissionController();
 
   xTaskCreatePinnedToCore(
     TaskBLE
@@ -76,7 +76,6 @@ void setup() {
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
 
-
   xTaskCreatePinnedToCore(
     TaskMotor
     ,  "TaskMotor"
@@ -86,16 +85,15 @@ void setup() {
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
 
-  /*
   xTaskCreatePinnedToCore(
     TaskMissionControl
     ,  "TaskMissionControl"
-    ,  1024
+    ,  4096
     ,  NULL
     ,  4
     ,  NULL
     ,  ARDUINO_RUNNING_CORE);
-  */
+  
 }
 
 void loop() {
