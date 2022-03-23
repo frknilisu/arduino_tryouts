@@ -1,12 +1,12 @@
-#ifndef POINT_H
-#define POINT_H
+#ifndef ACTION_POINT_H
+#define ACTION_POINT_H
 
 #include <Arduino.h>
 
-class Point {
+class ActionPoint {
   public:
-    Point();
-    Point(int segment, int remainder);
+    ActionPoint();
+    ActionPoint(int segment, int remainder);
     int getSegment() const;
     int getRemainder() const;
     void setSegment(int segment);
