@@ -1,4 +1,5 @@
 #include "BleManager.h"
+#include "MissionController.h"
 
 #include <BLEDevice.h>
 #include <BLE2902.h>
@@ -43,15 +44,16 @@ void BleManager::handleMsg(std::string receivedMsg) {
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      int currentRawSegment = encoderManager->getCurrentRawSegment();
-      int segmentCounter = encoderManager->getSegmentCounter();
-      missionController->setA(currentRawSegment, segmentCounter);
+      //int currentRawSegment = ;
+      //int segmentCounter = ;
+      missionController->setA(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      int currentRawSegment = encoderManager->getCurrentRawSegment();
-      int segmentCounter = encoderManager->getSegmentCounter();
-      missionController->setB(currentRawSegment, segmentCounter);
+      //int currentRawSegment = encoderManager->getCurrentRawSegment();
+      //int segmentCounter = encoderManager->getSegmentCounter();
+      //missionController->setB(currentRawSegment, segmentCounter);
+      missionController->setB(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
@@ -93,8 +95,8 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
   }
 };
 
-BleManager::BleManager(EncoderManager* encoderManager, MotorManager* motorManager)
-  : encoderManager(encoderManager), motorManager(motorManager) {
+BleManager::BleManager(EncoderManager* encoderManager, MotorManager* motorManager, MissionController* missionController)
+  : encoderManager(encoderManager), motorManager(motorManager), missionController(missionController) {
   Serial.println(">>>>>>>> BleManager() >>>>>>>>");
   this->currentState = States::INITIALIZING;
 }

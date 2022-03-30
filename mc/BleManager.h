@@ -7,6 +7,7 @@
 
 #include "EncoderManager.h"
 #include "MotorManager.h"
+//#include "MissionController.h"
 
 #define SERVICE_UUID_ENCODER        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID_ENCODER "33d14ca1-1ba0-4247-bb85-0ea4504eb03d"
@@ -15,9 +16,11 @@
 #define CHARACTERISTIC_UUID_RX "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
+class MissionController;
+
 class BleManager {
   public:
-    BleManager(EncoderManager*, MotorManager*);
+    BleManager(EncoderManager* encoderManager, MotorManager* motorManager, MissionController* missionController);
     void runLoop();
 
     void handleMsg(std::string receivedMsg);
@@ -39,6 +42,7 @@ class BleManager {
 
     EncoderManager* encoderManager;
     MotorManager* motorManager;
+    MissionController* missionController;
 
     void initBLE();
     void startAdvertising();

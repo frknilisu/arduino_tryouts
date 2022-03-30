@@ -1,35 +1,36 @@
 #include "MissionController.h"
+#include "BleManager.h"
 
-MissionController::MissionController(BleManager* bleManager, EncoderManager* encoderManager, MotorManager* motorManager)
-  : bleManager(bleManager), encoderManager(encoderManager), motorManager(motorManager) {
+MissionController::MissionController(EncoderManager* encoderManager, MotorManager* motorManager, BleManager* bleManager)
+  : encoderManager(encoderManager), motorManager(motorManager), bleManager(bleManager) {
   Serial.println(">>>>>>>> MissionController() >>>>>>>>");
 }
 
-MissionController::setA(int currentRawSegment, int segmentCounter) {
+void MissionController::setA(int currentRawSegment, int segmentCounter) {
   this->pA.setRemainder(currentRawSegment);
   this->pA.setSegment(segmentCounter);
       
-  logCout = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
-             "Point A - Segment Counter: " + String(segmentCounter);
+  //logCout = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
+  //           "Point A - Segment Counter: " + String(segmentCounter);
   
   this->isSetA = true;
 }
 
-MissionController::setB(int currentRawSegment, int segmentCounter) {
+void MissionController::setB(int currentRawSegment, int segmentCounter) {
   this->pB.setRemainder(currentRawSegment);
   this->pB.setSegment(segmentCounter);
       
-  logCout = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
-             "Point B - Segment Counter: " + String(segmentCounter);
+  //logCout = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
+  //           "Point B - Segment Counter: " + String(segmentCounter);
   
   this->isSetB = true;
 }
 
-MissionController::setStartProgramming(bool start) {
+void MissionController::setStartProgramming(bool start) {
   this->isStartProgramming = start;
 }
 
-MissionController::setFinishProgramming(bool finish) {
+void MissionController::setFinishProgramming(bool finish) {
   this->isFinishProgramming = finish;
 }
 
@@ -48,13 +49,14 @@ void MissionController::runLoop() {
         }
         break;
       case States::ACTION:
-        if(encoderManager->isTargetReached() && actionCompleted) {
+        if(encoderManager->isTargetReached() && this->actionCompleted) {
           this->currentState = States::PROGRAMMING;
         } else {
-          this->motorManager->move(this->pA, this->pB);
+          // int step = calculate(this->pA, this->pB);
+          this->motorManager->move(200);
         }
         break;
-      case States::ERROR:
+      case States::ERRORw:
         Serial.println("Error Occured");
         break;
     }
