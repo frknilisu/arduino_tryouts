@@ -7,14 +7,8 @@
 #define ARDUINO_RUNNING_CORE 1
 #endif
 
-#define SDA 21
-#define SCL 22
-
 #define joyX 2
 #define joyY 4
 #define joySW 14
-
-#define ENCODER_RESOLUTION  12
-#define MOTOR_RESOLUTION    1/8
 
 #endif

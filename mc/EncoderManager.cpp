@@ -1,17 +1,13 @@
-#include "EncoderManager.h"
-
 #include <Wire.h>
 
-int segmentCounter = 0;
-int previousRawSegment = 0;
-int currentRawSegment = 0;
+#include "EncoderManager.h"
 
 EncoderManager::EncoderManager() {
-  Serial.println(">>>>>>>> EncoderManager::EncoderManager() >>>>>>>>");
+  Serial.println(">>>>>>>> EncoderManager() >>>>>>>>");
 }
 
 void EncoderManager::initEncoder() {
-  Serial.println(">>>>>>>> EncoderManager::initEncoder() >>>>>>>>");
+  Serial.println(">>>>>>>> initEncoder() >>>>>>>>");
   
   Wire.begin(SDA, SCL);
   while(!this->ams5600.detectMagnet()) {
@@ -26,11 +22,18 @@ void EncoderManager::initEncoder() {
 }
 
 int EncoderManager::getCurrentRawSegment() {
-  return currentRawSegment;
+  return this->currentRawSegment;
 }
 
-/*
-void checkSegment() {
+int EncoderManager::getSegmentCounter() {
+  return this->segmentCounter;
+}
+
+bool EncoderManager::isTargetReached() {
+  return true;
+}
+
+void EncoderManager::checkSegment() {
   Serial.println("-----checkSegment----");
   Serial.printf("Prev: %d, Curr: %d\n", previousRawSegment, currentRawSegment);
   if((previousRawSegment >= 3072 && previousRawSegment < 4096) && (currentRawSegment >= 0 && currentRawSegment < 1024)) {
@@ -42,21 +45,22 @@ void checkSegment() {
   }
 }
 
-Pair<DIRECTION, int> pointDiffOnSameSegment(const Point& p1, const Point& p2) {
+/*
+Pair<DIRECTION, int> EncoderManager::pointDiffOnSameSegment(const ActionPoint& p1, const ActionPoint& p2) {
   int rawRemainderDiff = p2.getRemainder() - p1.getRemainder();
   DIRECTION dir = rawRemainderDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW;
   return Pair<DIRECTION, int>(dir, rawRemainderDiff);
 }
 
-int pair2StepDiff(Pair<DIRECTION, int> tempPointDiff) {
+int EncoderManager::pair2StepDiff(Pair<DIRECTION, int> tempPointDiff) {
   return int(tempPointDiff.first()) * tempPointDiff.second();
 }
 
-Pair<DIRECTION, int> step2PairDiff(int encoderStepDiff) {
+Pair<DIRECTION, int> EncoderManager::step2PairDiff(int encoderStepDiff) {
   return Pair<DIRECTION, int>(encoderStepDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW, abs(encoderStepDiff));
 }
 
-Pair<DIRECTION, int> pointDiffOnDifferentSegment(const Point& p1, const Point& p2) {
+Pair<DIRECTION, int> EncoderManager::pointDiffOnDifferentSegment(const ActionPoint& p1, const ActionPoint& p2) {
   if(p1.getSegment() == p2.getSegment())
     return pointDiffOnSameSegment(p1, p2);
   
@@ -67,11 +71,11 @@ Pair<DIRECTION, int> pointDiffOnDifferentSegment(const Point& p1, const Point& p
   encoderStepDiff += tempStepDiff;
   return step2PairDiff(encoderStepDiff);
 }
+*/
 
-int convertEncoderToMotorStep (int encoderStep) {
+int EncoderManager::convertEncoderToMotorStep(int encoderStep) {
   return round(encoderStep * (2^ENCODER_RESOLUTION / (200 / MOTOR_RESOLUTION)));
 }
-*/
 
 void EncoderManager::runLoop() {
   this->initEncoder();
@@ -81,7 +85,7 @@ void EncoderManager::runLoop() {
   for (;;)
   {
     currentRawSegment = this->ams5600.getRawAngle();
-    //checkSegment();
+    checkSegment();
     previousRawSegment = currentRawSegment;
     vTaskDelay(xDelay);
   }

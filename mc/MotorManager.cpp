@@ -19,6 +19,10 @@ void MotorManager::setMotorStatus(std::string stateName) {
   }
 }
 
+void MotorManager::move(int step) {
+  this->stepper.runSpeed();
+}
+
 void MotorManager::runLoop() {
   this->initMotor();
   

@@ -18,6 +18,7 @@ class MotorManager {
     void runLoop();
 
     void setMotorStatus(std::string stateName);
+    void move(int step);
   private:
     enum class States {
       RUN, 

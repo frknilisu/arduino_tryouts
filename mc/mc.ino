@@ -44,7 +44,7 @@ void TaskMissionControl(void *pvParameters) {
 
   Serial.println("Starting Mission Control Task...");
 
-  missionController.runLoop();
+  missionController->runLoop();
 }
 
 /*--------------------------------------------------*/
@@ -55,8 +55,8 @@ void setup() {
 
   encoderManager = new EncoderManager();
   motorManager = new MotorManager();
-  bleManager = new BleManager(encoderManager, motorManager);
-  missionController = new MissionController();
+  bleManager = new BleManager(encoderManager, motorManager, missionController);
+  missionController = new MissionController(encoderManager, motorManager, bleManager);
 
   xTaskCreatePinnedToCore(
     TaskBLE
