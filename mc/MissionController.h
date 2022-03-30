@@ -25,7 +25,7 @@ class MissionController {
       ERRORw
     };
     
-    States currentState;
+    States currentState = States::MANUAL;
 
     ActionPoint pA, pB;
     bool isStartProgramming = false;

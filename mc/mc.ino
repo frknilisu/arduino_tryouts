@@ -4,8 +4,6 @@
 #include "MotorManager.h"
 #include "MissionController.h"
 
-String logCout;
-
 BleManager* bleManager;
 EncoderManager* encoderManager;
 MotorManager* motorManager;
@@ -97,9 +95,5 @@ void setup() {
 }
 
 void loop() {
-  if(logCout.length()>0) {
-    Serial.println(logCout);
-    Serial.println("");
-    logCout = "";
-  }
+  
 }
