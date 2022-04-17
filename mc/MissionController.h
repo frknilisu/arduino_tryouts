@@ -22,7 +22,7 @@ class MissionController {
       MANUAL,
       PROGRAMMING,
       ACTION,
-      ERRORw
+      ERROR
     };
     
     States currentState = States::MANUAL;

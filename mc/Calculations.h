@@ -1,13 +1,13 @@
 #ifndef CALCULATIONS_H
 #define CALCULATIONS_H
 
-#define ENCODER_RESOLUTION  12
-#define MOTOR_RESOLUTION    1/8
-
 #include <Arduino.h>
 
 #include "Pair.h"
 #include "ActionPoint.h"
+
+#define ENCODER_RESOLUTION  12
+#define MOTOR_RESOLUTION    1/8
 
 namespace Calculations
 {
@@ -30,7 +30,7 @@ namespace Calculations
     return Pair<DIRECTION, int>(encoderStepDiff >= 0 ? DIRECTION::CW : DIRECTION::CCW, abs(encoderStepDiff));
   }
   
-  Pair<DIRECTION, int> pointDiffOnDifferentSegment(const ActionPoint& p1, const ActionPoint& p2) {
+  Pair<DIRECTION, int> calculatePointDifference(const ActionPoint& p1, const ActionPoint& p2) {
     if(p1.getSegment() == p2.getSegment())
       return pointDiffOnSameSegment(p1, p2);
     
@@ -43,7 +43,7 @@ namespace Calculations
   }
   
   int convertEncoderStepToMotorStep(int encoderStep) {
-      return round(encoderStep * (2^ENCODER_RESOLUTION / (200 / MOTOR_RESOLUTION)));
+    return round(encoderStep * (2^ENCODER_RESOLUTION / (200 / MOTOR_RESOLUTION)));
   }
 }
 

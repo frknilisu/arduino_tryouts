@@ -12,20 +12,12 @@ MissionController::MissionController(EncoderManager* encoderManager, MotorManage
 void MissionController::setA(int currentRawSegment, int segmentCounter) {
   this->pA.setRemainder(currentRawSegment);
   this->pA.setSegment(segmentCounter);
-      
-  //logCout = "Point A - Current Segment: " + String(currentRawSegment) + "\n" + \
-  //           "Point A - Segment Counter: " + String(segmentCounter);
-  
   this->isSetA = true;
 }
 
 void MissionController::setB(int currentRawSegment, int segmentCounter) {
   this->pB.setRemainder(currentRawSegment);
   this->pB.setSegment(segmentCounter);
-      
-  //logCout = "Point B - Current Segment: " + String(currentRawSegment) + "\n" + \
-  //           "Point B - Segment Counter: " + String(segmentCounter);
-  
   this->isSetB = true;
 }
 
@@ -60,13 +52,11 @@ void MissionController::runLoop() {
         if(encoderManager->isTargetReached() && this->actionCompleted) {
           this->currentState = States::PROGRAMMING;
         } else {
-          int ss = convertEncoderStepToMotorStep(200);
-          Pair<DIRECTION, int> pdi = pointDiffOnSameSegment(this->pA, this->pB);
-          // int step = calculate(this->pA, this->pB);
-          this->motorManager->move(200);
+          Pair<DIRECTION, int> diff = calculatePointDifference(this->pA, this->pB);
+          this->motorManager->move(diff.second());
         }
         break;
-      case States::ERRORw:
+      case States::ERROR:
         Serial.println("Error Occured");
         break;
     }

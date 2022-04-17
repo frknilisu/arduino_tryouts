@@ -1,11 +1,11 @@
 #include "MotorManager.h"
 
 MotorManager::MotorManager() {
-  Serial.println(">>>>>>>> MotorManager::MotorManager() >>>>>>>>");
+  Serial.println(">>>>>>>> MotorManager() >>>>>>>>");
 }
 
 void MotorManager::initMotor() {
-  Serial.println(">>>>>>>> MotorManager::initMotor() >>>>>>>>");
+  Serial.println(">>>>>>>> initMotor() >>>>>>>>");
   
   this->stepper = AccelStepper(MotorInterfaceType, stepPin, dirPin);
   this->stepper.setMaxSpeed(1000);

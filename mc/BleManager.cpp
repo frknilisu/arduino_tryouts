@@ -44,15 +44,10 @@ void BleManager::handleMsg(std::string receivedMsg) {
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      //int currentRawSegment = ;
-      //int segmentCounter = ;
       missionController->setA(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      //int currentRawSegment = encoderManager->getCurrentRawSegment();
-      //int segmentCounter = encoderManager->getSegmentCounter();
-      //missionController->setB(currentRawSegment, segmentCounter);
       missionController->setB(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
       break;
     case BLEMsgsEnum::msg_MotorRun:
@@ -102,7 +97,7 @@ BleManager::BleManager(EncoderManager* encoderManager, MotorManager* motorManage
 }
 
 void BleManager::initBLE() {
-  Serial.println(">>>>>>>> BleManager::initBLE() >>>>>>>>");
+  Serial.println(">>>>>>>> initBLE() >>>>>>>>");
   
   BLEDevice::init("MyESP32 BLE");
   
