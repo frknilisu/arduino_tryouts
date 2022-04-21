@@ -25,10 +25,22 @@ class MotorManager {
       STOP
     };
 
+    enum class StepType {
+      Full,
+      Half,
+      _1_div_4,
+      _1_div_8,
+      _1_div_16,
+      _1_div_32
+    };
+
     AccelStepper stepper;
     States currentState;
+    StepType stepType;
+
 
     void initMotor();
+    void setStepResolution(StepType);
 };
 
 #endif

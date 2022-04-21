@@ -13,17 +13,13 @@ MissionController* missionController;
 /*---------------------- Tasks ---------------------*/
 /*--------------------------------------------------*/
 
-void TaskBLE(void *pvParameters) {
-  (void) pvParameters;
-
+void TaskBLE(void* pvParameters) {
   Serial.println("Starting BLE Task...");
   
   bleManager->runLoop();
 }
 
-void TaskEncoder(void *pvParameters) {
-  (void) pvParameters;
-
+void TaskEncoder(void* pvParameters) {
   Serial.println("Starting Encoder Task...");
 
   encoderManager->runLoop();
@@ -59,38 +55,38 @@ void setup() {
   xTaskCreatePinnedToCore(
     TaskBLE
     ,  "TaskBLE"
-    ,  4096
+    ,  10000
     ,  NULL
-    ,  1
+    ,  2
     ,  NULL
-    ,  ARDUINO_RUNNING_CORE);
+    ,  1);
 
   xTaskCreatePinnedToCore(
     TaskEncoder
     ,  "TaskEncoder"
-    ,  4096
+    ,  10000
     ,  NULL
     ,  2
     ,  NULL
-    ,  ARDUINO_RUNNING_CORE);
+    ,  0);
 
   xTaskCreatePinnedToCore(
     TaskMotor
     ,  "TaskMotor"
-    ,  4096
+    ,  10000
     ,  NULL
-    ,  3
+    ,  2
     ,  NULL
-    ,  ARDUINO_RUNNING_CORE);
+    ,  1);
 
   xTaskCreatePinnedToCore(
     TaskMissionControl
     ,  "TaskMissionControl"
-    ,  4096
+    ,  10000
     ,  NULL
-    ,  4
+    ,  2
     ,  NULL
-    ,  ARDUINO_RUNNING_CORE);
+    ,  1);
   
 }
 

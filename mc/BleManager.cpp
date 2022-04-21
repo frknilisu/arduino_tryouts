@@ -32,6 +32,7 @@ BLEMsgsEnum hashit(std::string const& inString) {
 
 void BleManager::handleMsg(std::string receivedMsg) {
   lastReceivedMsg = "";
+  int cs, sc;
   switch(hashit(receivedMsg)) {
     case BLEMsgsEnum::msg_StartProgramming:
       Serial.println("-- Received Msg: startProgramming --");
@@ -44,11 +45,17 @@ void BleManager::handleMsg(std::string receivedMsg) {
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      missionController->setA(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
+      cs = encoderManager->getCurrentRawSegment();
+      sc = encoderManager->getSegmentCounter();
+      Serial.printf("cs: %d, sc: %d\n", cs, sc);
+      missionController->setA(cs, sc);
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      missionController->setB(encoderManager->getCurrentRawSegment(), encoderManager->getSegmentCounter());
+      cs = encoderManager->getCurrentRawSegment();
+      sc = encoderManager->getSegmentCounter();
+      Serial.printf("cs: %d, sc: %d\n", cs, sc);
+      missionController->setB(cs, sc);
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
@@ -147,13 +154,16 @@ void BleManager::runLoop() {
   {
     switch(this->currentState) {
       case States::INITIALIZING:
+        Serial.println("States::INITIALIZING");
         this->initBLE();
         this->currentState = States::START_ADVERTISING;
         break;
       case States::START_ADVERTISING:
+        Serial.println("States::START_ADVERTISING");
         this->startAdvertising();
         break;
       case States::LISTENING:
+        Serial.println("States::LISTENING");
         if (deviceConnected && !oldDeviceConnected) {
           // do stuff here on connecting
           oldDeviceConnected = deviceConnected;
@@ -176,6 +186,6 @@ void BleManager::runLoop() {
         }
         break;
     }
-    //vTaskDelay(1000); // Delay a second between loops.
+    vTaskDelay(1000); // Delay a second between loops.
   }
 }

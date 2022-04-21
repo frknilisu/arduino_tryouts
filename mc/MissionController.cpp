@@ -10,12 +10,16 @@ MissionController::MissionController(EncoderManager* encoderManager, MotorManage
 }
 
 void MissionController::setA(int currentRawSegment, int segmentCounter) {
+  Serial.printf("setA: %d / %d\n", currentRawSegment, segmentCounter);
+  this->pA.print();
   this->pA.setRemainder(currentRawSegment);
   this->pA.setSegment(segmentCounter);
   this->isSetA = true;
 }
 
 void MissionController::setB(int currentRawSegment, int segmentCounter) {
+  Serial.printf("setB: %d / %d\n", currentRawSegment, segmentCounter);
+  this->pB.print();
   this->pB.setRemainder(currentRawSegment);
   this->pB.setSegment(segmentCounter);
   this->isSetB = true;
@@ -60,5 +64,6 @@ void MissionController::runLoop() {
         Serial.println("Error Occured");
         break;
     }
+    vTaskDelay(1000); // Delay a second between loops.
   }
 }

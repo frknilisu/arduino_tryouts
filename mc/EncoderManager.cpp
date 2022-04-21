@@ -49,7 +49,7 @@ void EncoderManager::runLoop() {
   this->initEncoder();
   
   //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
-  const TickType_t xDelay = 100;
+  const TickType_t xDelay = 1000;
   for (;;)
   {
     currentRawSegment = this->ams5600.getRawAngle();

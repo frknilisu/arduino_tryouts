@@ -11,6 +11,7 @@ class ActionPoint {
     int getRemainder() const;
     void setSegment(int segment);
     void setRemainder(int remainder);
+    void print();
     
   private:
     int m_segment;      // counter
