@@ -1,5 +1,4 @@
 #include "BleManager.h"
-#include "MissionController.h"
 
 #include <BLEDevice.h>
 #include <BLE2902.h>
@@ -31,39 +30,30 @@ BLEMsgsEnum hashit(std::string const& inString) {
 /*--------------------------------------------------------------*/
 
 void BleManager::handleMsg(std::string receivedMsg) {
-  lastReceivedMsg = "";
-  int cs, sc;
   switch(hashit(receivedMsg)) {
     case BLEMsgsEnum::msg_StartProgramming:
       Serial.println("-- Received Msg: startProgramming --");
-      missionController->setStartProgramming(true);
+      xTaskNotify(missionControlTaskHandle, Commands_t::START_PROGRAMMING_CMD, eNoAction);
       break;
     case BLEMsgsEnum::msg_FinishProgramming:
       Serial.println("-- Received Msg: finishProgramming --");
-      missionController->setStartProgramming(false);
-      missionController->setFinishProgramming(true);
+      xTaskNotify(missionControlTaskHandle, Commands_t::FINISH_PROGRAMMING_CMD, eNoAction);
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      cs = encoderManager->getCurrentRawSegment();
-      sc = encoderManager->getSegmentCounter();
-      Serial.printf("cs: %d, sc: %d\n", cs, sc);
-      missionController->setA(cs, sc);
+      xTaskNotify(missionControlTaskHandle, Commands_t::SET_A_CMD, eNoAction);
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      cs = encoderManager->getCurrentRawSegment();
-      sc = encoderManager->getSegmentCounter();
-      Serial.printf("cs: %d, sc: %d\n", cs, sc);
-      missionController->setB(cs, sc);
+      xTaskNotify(missionControlTaskHandle, Commands_t::SET_B_CMD, eNoAction);
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
-      this->motorManager->setMotorStatus("RUN");
+      xTaskNotify(motorTaskHandle, Commands_t::MOTOR_RUN_CMD, eNoAction);
       break;
     case BLEMsgsEnum::msg_MotorStop:
       Serial.println("-- Received Msg: motorStop --");
-      this->motorManager->setMotorStatus("STOP");
+      xTaskNotify(motorTaskHandle, Commands_t::MOTOR_STOP_CMD, eNoAction);
       break;
   }
 }
@@ -97,14 +87,14 @@ class MyCharacteristicCallbacks: public BLECharacteristicCallbacks {
   }
 };
 
-BleManager::BleManager(EncoderManager* encoderManager, MotorManager* motorManager, MissionController* missionController)
-  : encoderManager(encoderManager), motorManager(motorManager), missionController(missionController) {
+BleManager::BleManager() {
   Serial.println(">>>>>>>> BleManager() >>>>>>>>");
-  this->currentState = States::INITIALIZING;
+
+  this->init();
 }
 
-void BleManager::initBLE() {
-  Serial.println(">>>>>>>> initBLE() >>>>>>>>");
+void BleManager::init() {
+  Serial.println(">>>>>>>> BleManager::init() >>>>>>>>");
   
   BLEDevice::init("MyESP32 BLE");
   
@@ -129,6 +119,8 @@ void BleManager::initBLE() {
                                          );
   
   this->pRxCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+
+  this->currentState = States::START_ADVERTISING;
   
 }
 
@@ -144,20 +136,17 @@ void BleManager::startAdvertising() {
 }
 
 void BleManager::notifyEncoder() {
-  int rss = encoderManager->getCurrentRawSegment();
-  this->pTxCharacteristic->setValue(rss);
+  uint32_t encoderValue;
+  xQueueReceive(encoderReadQueue, &encoderValue, portMAX_DELAY);
+  this->pTxCharacteristic->setValue(encoderValue);
   this->pTxCharacteristic->notify();
 }
 
 void BleManager::runLoop() {
-  for (;;) // A Task shall never return or exit.
+  for (;;)
   {
-    switch(this->currentState) {
-      case States::INITIALIZING:
-        Serial.println("States::INITIALIZING");
-        this->initBLE();
-        this->currentState = States::START_ADVERTISING;
-        break;
+    switch(this->currentState) 
+    {
       case States::START_ADVERTISING:
         Serial.println("States::START_ADVERTISING");
         this->startAdvertising();
@@ -165,7 +154,6 @@ void BleManager::runLoop() {
       case States::LISTENING:
         Serial.println("States::LISTENING");
         if (deviceConnected && !oldDeviceConnected) {
-          // do stuff here on connecting
           oldDeviceConnected = deviceConnected;
           this->currentState = States::CONNECTED;
         }
@@ -175,17 +163,15 @@ void BleManager::runLoop() {
         if(!lastReceivedMsg.empty()) {
           this->handleMsg(lastReceivedMsg);
         }
-        vTaskDelay(10); // bluetooth stack will go into congestion, if too many packets are sent
+        break;
       case States::DISCONNECTED:
-        // disconnecting
         if (!deviceConnected && oldDeviceConnected) {
-          vTaskDelay(500); // give the bluetooth stack the chance to get things ready
           oldDeviceConnected = deviceConnected;
           Serial.println("re-start advertising");
           this->currentState = States::START_ADVERTISING;
         }
         break;
     }
-    vTaskDelay(1000); // Delay a second between loops.
+    vTaskDelay(1000);
   }
 }

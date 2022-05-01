@@ -1,6 +1,7 @@
 #ifndef ENCODER_MANAGER_H
 #define ENCODER_MANAGER_H
 
+#include "Init.h"
 #include "AS5600.h"
 
 #define ENCODER_RESOLUTION  12
@@ -12,17 +13,15 @@ class EncoderManager {
   public:
     EncoderManager();
     void runLoop();
-
-    int getCurrentRawSegment();
-    int getSegmentCounter();
-    bool isTargetReached();
   private:
     AMS_5600 ams5600;
-    int previousRawSegment = 0;
-    int currentRawSegment = 0;
-    int segmentCounter = 0;
+    int previousAbsoluteStep = 0;
+    int currentAbsoluteStep = 0;
+    int roundCounter = 0;
+
+    EncoderData_t encoderData;
     
-    void initEncoder();
+    void init();
     void checkSegment();
 };
 

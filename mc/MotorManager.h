@@ -18,10 +18,11 @@ class MotorManager {
     void runLoop();
 
     void setMotorStatus(std::string stateName);
-    void move(int step);
+    void getCurrentPosition();
   private:
     enum class States {
-      RUN, 
+      IDLE,
+      RUN,
       STOP
     };
 
@@ -35,11 +36,10 @@ class MotorManager {
     };
 
     AccelStepper stepper;
-    States currentState;
+    States currentState = States::IDLE;
     StepType stepType;
 
-
-    void initMotor();
+    void init();
     void setStepResolution(StepType);
 };
 

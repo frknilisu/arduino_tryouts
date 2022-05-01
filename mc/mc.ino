@@ -26,16 +26,12 @@ void TaskEncoder(void* pvParameters) {
 }
 
 void TaskMotor(void *pvParameters) {
-  (void) pvParameters;
-
   Serial.println("Starting Motor Driving Task...");
 
   motorManager->runLoop();
 }
 
 void TaskMissionControl(void *pvParameters) {
-  (void) pvParameters;
-
   Serial.println("Starting Mission Control Task...");
 
   missionController->runLoop();
@@ -49,43 +45,43 @@ void setup() {
 
   encoderManager = new EncoderManager();
   motorManager = new MotorManager();
-  bleManager = new BleManager(encoderManager, motorManager, missionController);
-  missionController = new MissionController(encoderManager, motorManager, bleManager);
+  bleManager = new BleManager();
+  missionController = new MissionController();
 
   xTaskCreatePinnedToCore(
     TaskBLE
     ,  "TaskBLE"
-    ,  10000
+    ,  4096
     ,  NULL
     ,  2
-    ,  NULL
-    ,  1);
+    ,  &bleTaskHandle
+    ,  0);
 
   xTaskCreatePinnedToCore(
     TaskEncoder
     ,  "TaskEncoder"
-    ,  10000
+    ,  4096
     ,  NULL
     ,  2
-    ,  NULL
+    ,  &encoderTaskHandle
     ,  0);
 
   xTaskCreatePinnedToCore(
     TaskMotor
     ,  "TaskMotor"
-    ,  10000
+    ,  4096
     ,  NULL
     ,  2
-    ,  NULL
+    ,  &motorTaskHandle
     ,  1);
 
   xTaskCreatePinnedToCore(
     TaskMissionControl
     ,  "TaskMissionControl"
-    ,  10000
+    ,  4096
     ,  NULL
     ,  2
-    ,  NULL
+    ,  &missionControlTaskHandle
     ,  1);
   
 }

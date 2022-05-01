@@ -1,11 +1,17 @@
+#include "Init.h"
 #include "MotorManager.h"
+
+uint32_t cmd;
+MotorActionCommand_t motorActionCommand;
 
 MotorManager::MotorManager() {
   Serial.println(">>>>>>>> MotorManager() >>>>>>>>");
+
+  this->init();
 }
 
-void MotorManager::initMotor() {
-  Serial.println(">>>>>>>> initMotor() >>>>>>>>");
+void MotorManager::init() {
+  Serial.println(">>>>>>>> MotorManager::init() >>>>>>>>");
 
   pinMode(stepPin, OUTPUT);
   pinMode(dirPin, OUTPUT);
@@ -14,9 +20,11 @@ void MotorManager::initMotor() {
   pinMode(MS2, OUTPUT);
   
   this->stepper = AccelStepper(MotorInterfaceType, stepPin, dirPin);
-  this->stepper.setMaxSpeed(1000);
-
   this->setStepResolution(StepType::_1_div_8);
+  this->stepper.setMaxSpeed(1000);
+  this->stepper.setAcceleration(100);
+  this->stepper.setSpeed(200);
+  this->stepper.moveTo(20000);
 }
 
 void MotorManager::setStepResolution(StepType stepType) {
@@ -31,6 +39,7 @@ void MotorManager::setStepResolution(StepType stepType) {
   Low	  High	High	1/32 step
   High	High	High	1/32 step
   */
+  Serial.println(">>>>>>>> setStepResolution() >>>>>>>>");
   switch(stepType) {
     case StepType::Full:
       this->stepType = StepType::Full;
@@ -79,29 +88,33 @@ void MotorManager::setMotorStatus(std::string stateName) {
   }
 }
 
-void MotorManager::move(int step) {
-  this->stepper.runSpeed();
+int MotorManager::getCurrentPosition() {
+  Serial.println(">>>>>>>> getCurrentPosition() >>>>>>>>");
+  return this->stepper.currentPosition();
 }
 
 void MotorManager::runLoop() {
-  this->initMotor();
-  
-  //const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
-  const TickType_t xDelay = 1000;
   for (;;)
   {
     switch(this->currentState) {
+      case States::IDLE:
+        xReturn = xTaskNotifyWait(0, 0, &cmd, portMAX_DELAY);
+        motorActionCommand = (MotorActionCommand_t)cmd;
+        break;
       case States::RUN:
-        // Set the speed of the motor in steps per second:
-        this->stepper.setSpeed(512);
-        // Step the motor with constant speed as set by setSpeed():
-        this->stepper.runSpeed();
+        if(stepper.distanceToGo() == 0) {
+          stepper.moveTo(-stepper.currentPosition());
+        }
+        this->stepper.run();
+        //this->stepper.runSpeedToPosition();
         break;
       case States::STOP:
         this->stepper.stop();
         break;
     }
+
+    Serial.println(this->getCurrentPosition());
     
-    vTaskDelay(xDelay);
+    vTaskDelay(1);
   }
 }

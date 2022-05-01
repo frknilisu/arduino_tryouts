@@ -18,12 +18,10 @@ int ActionPoint::getRemainder() const {
 
 
 void ActionPoint::setSegment(int segment) {
-  Serial.printf("setSegment: %d\n", segment);
   this->m_segment = segment;
 }
 
 void ActionPoint::setRemainder(int remainder) {
-  Serial.printf("setRemainder: %d\n", remainder);
   this->m_remainder = remainder;
 }
 

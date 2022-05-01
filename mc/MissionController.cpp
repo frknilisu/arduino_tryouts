@@ -1,69 +1,95 @@
+#include "Init.h"
 #include "MissionController.h"
-#include "BleManager.h"
-#include "Calculations.h"
+#include "ActionPoint.h"
 
-using namespace Calculations;
+ActionPoint pA, pB;
+bool isStartProgramming = false;
+bool isFinishProgramming = false;
+bool isSetA = false;
+bool isSetB = false;
 
-MissionController::MissionController(EncoderManager* encoderManager, MotorManager* motorManager, BleManager* bleManager)
-  : encoderManager(encoderManager), motorManager(motorManager), bleManager(bleManager) {
+BaseType_t xReturn;
+
+MissionController::MissionController() {
   Serial.println(">>>>>>>> MissionController() >>>>>>>>");
 }
 
-void MissionController::setA(int currentRawSegment, int segmentCounter) {
-  Serial.printf("setA: %d / %d\n", currentRawSegment, segmentCounter);
-  this->pA.print();
-  this->pA.setRemainder(currentRawSegment);
-  this->pA.setSegment(segmentCounter);
-  this->isSetA = true;
+void MissionController::setA() {
+  uint32_t encoderData = receiveEncoderData();
+  pA.setData(encoderData);
+  pA.print();
+  isSetA = true;
 }
 
-void MissionController::setB(int currentRawSegment, int segmentCounter) {
-  Serial.printf("setB: %d / %d\n", currentRawSegment, segmentCounter);
-  this->pB.print();
-  this->pB.setRemainder(currentRawSegment);
-  this->pB.setSegment(segmentCounter);
-  this->isSetB = true;
+void MissionController::setB() {
+  uint32_t encoderData = receiveEncoderData();
+  pB.setData(encoderData);
+  pB.print();
+  isSetB = true;
 }
 
-void MissionController::setStartProgramming(bool start) {
-  this->isStartProgramming = start;
+void MissionController::setStartProgramming() {
+  isStartProgramming = true;
 }
 
-void MissionController::setFinishProgramming(bool finish) {
-  this->isFinishProgramming = finish;
+void MissionController::setFinishProgramming() {
+  isFinishProgramming = true;
+}
+
+uint32_t receiveEncoderData() {
+  uint32_t encoderData;
+  xQueueReceive(qEncoderTask, &encoderData, portMAX_DELAY);
+  return encoderData;
 }
 
 void MissionController::runLoop() {
+  
+  uint32_t notificationValue;
   for(;;)
   {
     switch(this->currentState) {
       case States::MANUAL:
-        if(bleManager->isDeviceConnected()) {
-          //this->motorManager->manualControlEnable(true);
-          if(this->isStartProgramming) {
-            this->currentState = States::PROGRAMMING;
-          }
-        }
+        Serial.println("--- States::MANUAL ---");
+        xReturn = xTaskNotifyWait(0, 0, NULL, portMAX_DELAY);
+        isStartProgramming = true;
+        this->currentState = States::PROGRAMMING;
         break;
       case States::PROGRAMMING:
-        //this->motorManager->manualControlEnable(true);
-        if(this->isSetA && this->isSetB && this->isFinishProgramming) {
+        Serial.println("--- States::PROGRAMMING ---");
+        xReturn = xTaskNotifyWait(0, 0, &notificationValue, portMAX_DELAY);
+        Commands_t* cmd = (Commands_t*)(notificationValue);
+        if(xReturn == pdTRUE && (*cmd == Commands_t::SET_A_CMD)) {
+          this->setA();
+        }
+        xReturn = xTaskNotifyWait(0, 0, &notificationValue, portMAX_DELAY);
+        cmd = (Commands_t*)(notificationValue);
+        if(xReturn == pdTRUE && (*cmd == Commands_t::SET_B_CMD)) {
+          this->setB();
+        }
+        xReturn = xTaskNotifyWait(0, 0, &notificationValue, portMAX_DELAY);
+        if(xReturn == pdTRUE && (*cmd == Commands_t::FINISH_PROGRAMMING_CMD)) {
+          this->setFinishProgramming();
+        }
+        if(isSetA && isSetB && isFinishProgramming) {
+          Serial.println("Point A and B are set. Finishing action programming..");
           this->currentState = States::ACTION;
-          //this->motorManager->manualControlEnable(false);
         }
         break;
       case States::ACTION:
-        if(encoderManager->isTargetReached() && this->actionCompleted) {
-          this->currentState = States::PROGRAMMING;
-        } else {
-          Pair<DIRECTION, int> diff = calculatePointDifference(this->pA, this->pB);
-          this->motorManager->move(diff.second());
-        }
+        Serial.println("--- States::ACTION ---");
+        MotorActionCommand_t motorActionCmd;
+        motorActionCmd.cmd = Commands_t::MOTOR_START_ACTION_CMD;
+        motorActionCmd.pointA = pA;
+        motorActionCmd.pointB = pB;
+        motorActionCmd.direction = 1;
+        xTaskNotify(motorTaskHandle, motorActionCmd, eSetValueWithOverwrite);
+        xReturn = xTaskNotifyWait(0, 0, NULL, portMAX_DELAY); // finished
+        this->currentState = States::PROGRAMMING;
         break;
       case States::ERROR:
         Serial.println("Error Occured");
         break;
     }
-    vTaskDelay(1000); // Delay a second between loops.
+    vTaskDelay(1000);
   }
 }
