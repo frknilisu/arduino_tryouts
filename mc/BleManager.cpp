@@ -33,27 +33,33 @@ void BleManager::handleMsg(std::string receivedMsg) {
   switch(hashit(receivedMsg)) {
     case BLEMsgsEnum::msg_StartProgramming:
       Serial.println("-- Received Msg: startProgramming --");
-      xTaskNotify(missionControlTaskHandle, Commands_t::START_PROGRAMMING_CMD, eNoAction);
+      missionControlCommand.cmd = Commands_t::START_PROGRAMMING_CMD;
+      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_FinishProgramming:
       Serial.println("-- Received Msg: finishProgramming --");
-      xTaskNotify(missionControlTaskHandle, Commands_t::FINISH_PROGRAMMING_CMD, eNoAction);
+      missionControlCommand.cmd = Commands_t::FINISH_PROGRAMMING_CMD;
+      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
-      xTaskNotify(missionControlTaskHandle, Commands_t::SET_A_CMD, eNoAction);
+      missionControlCommand.cmd = Commands_t::SET_A_CMD;
+      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
-      xTaskNotify(missionControlTaskHandle, Commands_t::SET_B_CMD, eNoAction);
+      missionControlCommand.cmd = Commands_t::SET_B_CMD;
+      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
-      xTaskNotify(motorTaskHandle, Commands_t::MOTOR_RUN_CMD, eNoAction);
+      motorActionCommand.cmd = Commands_t::MOTOR_RUN_CMD;
+      xTaskNotify(motorTaskHandle, motorActionCommand, eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_MotorStop:
       Serial.println("-- Received Msg: motorStop --");
-      xTaskNotify(motorTaskHandle, Commands_t::MOTOR_STOP_CMD, eNoAction);
+      motorActionCommand.cmd = Commands_t::MOTOR_STOP_CMD;
+      xTaskNotify(motorTaskHandle, motorActionCommand, eSetValueWithOverwrite);
       break;
   }
 }
@@ -107,16 +113,16 @@ void BleManager::init() {
 
   // Create a BLE Characteristic
   this->pTxCharacteristic = this->pService->createCharacteristic(
-                        CHARACTERISTIC_UUID_TX,
-                        BLECharacteristic::PROPERTY_NOTIFY
-                      );
+                              CHARACTERISTIC_UUID_TX,
+                              BLECharacteristic::PROPERTY_NOTIFY
+                            );
 
   this->pTxCharacteristic->addDescriptor(new BLE2902());
 
   this->pRxCharacteristic = this->pService->createCharacteristic(
-                                           CHARACTERISTIC_UUID_RX,
-                                           BLECharacteristic::PROPERTY_WRITE
-                                         );
+                              CHARACTERISTIC_UUID_RX,
+                              BLECharacteristic::PROPERTY_WRITE
+                            );
   
   this->pRxCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
 
@@ -136,10 +142,12 @@ void BleManager::startAdvertising() {
 }
 
 void BleManager::notifyEncoder() {
-  uint32_t encoderValue;
-  xQueueReceive(encoderReadQueue, &encoderValue, portMAX_DELAY);
-  this->pTxCharacteristic->setValue(encoderValue);
-  this->pTxCharacteristic->notify();
+  xStatus = xQueueReceive(encoderReadQueue, &value, pdMS_TO_TICKS(10));
+  if(xReturn == pdPASS) {
+    encoderData = (EncoderData_t)(value);
+    this->pTxCharacteristic->setValue(encoderData.absoluteStep);
+    this->pTxCharacteristic->notify();
+  }
 }
 
 void BleManager::runLoop() {
@@ -148,25 +156,28 @@ void BleManager::runLoop() {
     switch(this->currentState) 
     {
       case States::START_ADVERTISING:
-        Serial.println("States::START_ADVERTISING");
+        Serial.println("--- States::START_ADVERTISING ---");
         this->startAdvertising();
         break;
       case States::LISTENING:
-        Serial.println("States::LISTENING");
+        Serial.println("--- States::LISTENING ---");
         if (deviceConnected && !oldDeviceConnected) {
           oldDeviceConnected = deviceConnected;
           this->currentState = States::CONNECTED;
         }
         break;
       case States::CONNECTED:
+        Serial.println("--- States::CONNECTED ---");
         this->notifyEncoder();
         if(!lastReceivedMsg.empty()) {
           this->handleMsg(lastReceivedMsg);
         }
         break;
       case States::DISCONNECTED:
+        Serial.println("--- States::DISCONNECTED ---");
         if (!deviceConnected && oldDeviceConnected) {
           oldDeviceConnected = deviceConnected;
+          vTaskDelay(100);
           Serial.println("re-start advertising");
           this->currentState = States::START_ADVERTISING;
         }

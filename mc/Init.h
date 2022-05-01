@@ -1,6 +1,8 @@
 #ifndef INIT_H
 #define INIT_H
 
+#include <Arduino.h>
+
 #define joyX 2
 #define joyY 4
 #define joySW 14
@@ -36,10 +38,15 @@ typedef enum Commands
 
 typedef struct MotorActionCommand
 {
-  Commands_t cmd;   /* The operation to perform (read or write). */
-  EncoderData_t pointA;    /* Identifies the data being read or written. */
-  EncoderData_t pointB; /* Only used when writing data to the cloud server. */
-  uint8_t direction;   /* The handle of the task performing the operation. */
+  Commands_t cmd;
+  EncoderData_t pointA;
+  EncoderData_t pointB;
+  uint8_t direction;
 } MotorActionCommand_t;
+
+typedef struct MissionControlCommand
+{
+  Commands_t cmd;
+} MissionControlCommand_t;
 
 #endif

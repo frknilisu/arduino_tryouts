@@ -1,6 +1,7 @@
 #ifndef MOTOR_MANAGER_H
 #define MOTOR_MANAGER_H
 
+#include "Init.h"
 #include <AccelStepper.h>
 
 // Define the AccelStepper interface type
@@ -16,9 +17,6 @@ class MotorManager {
   public:
     MotorManager();
     void runLoop();
-
-    void setMotorStatus(std::string stateName);
-    void getCurrentPosition();
   private:
     enum class States {
       IDLE,
@@ -35,12 +33,16 @@ class MotorManager {
       _1_div_32
     };
 
+    uint32_t value;
     AccelStepper stepper;
     States currentState = States::IDLE;
     StepType stepType;
+    MotorActionCommand_t motorActionCommand;
 
     void init();
     void setStepResolution(StepType);
+    void setMotorStatus(std::string stateName);
+    void getCurrentPosition();
 };
 
 #endif

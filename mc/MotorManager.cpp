@@ -1,8 +1,4 @@
-#include "Init.h"
 #include "MotorManager.h"
-
-uint32_t cmd;
-MotorActionCommand_t motorActionCommand;
 
 MotorManager::MotorManager() {
   Serial.println(">>>>>>>> MotorManager() >>>>>>>>");
@@ -85,6 +81,8 @@ void MotorManager::setMotorStatus(std::string stateName) {
     this->currentState = States::RUN;
   } else if(stateName == "STOP") {
     this->currentState = States::STOP;
+  } else if(stateName == "IDLE") {
+    this->currentState = States::IDLE;
   }
 }
 
@@ -96,20 +94,44 @@ int MotorManager::getCurrentPosition() {
 void MotorManager::runLoop() {
   for (;;)
   {
-    switch(this->currentState) {
+    xReturn = xTaskNotifyWait(0, 0, &value, pdMS_TO_TICKS(10));
+    if(xReturn == pdTRUE) {
+      hasNewNotify = true;
+      motorActionCommand = (MotorActionCommand_t)(value);
+    } else {
+      hasNewNotify = false;
+    }
+    switch(this->currentState) 
+    {
       case States::IDLE:
-        xReturn = xTaskNotifyWait(0, 0, &cmd, portMAX_DELAY);
-        motorActionCommand = (MotorActionCommand_t)cmd;
+        Serial.println("--- States::IDLE ---");
+        if(hasNewNotify) {
+          if(motorActionCommand.cmd == Commands_t::MOTOR_RUN_CMD) {
+            this->setMotorStatus("RUN");
+          } else if(motorActionCommand.cmd == Commands_t::MOTOR_START_ACTION_CMD) {
+            // TODO
+          }
+        }
         break;
       case States::RUN:
-        if(stepper.distanceToGo() == 0) {
-          stepper.moveTo(-stepper.currentPosition());
+        Serial.println("--- States::RUN ---");
+        if(hasNewNotify) {
+          if(motorActionCommand.cmd == Commands_t::MOTOR_STOP_CMD) {
+            this->setMotorStatus("STOP");
+          }
+        } else {
+          if(stepper.distanceToGo() == 0) {
+            stepper.moveTo(-stepper.currentPosition());
+          }
+          this->stepper.run();
+          //this->stepper.runSpeedToPosition();
         }
-        this->stepper.run();
-        //this->stepper.runSpeedToPosition();
         break;
       case States::STOP:
+        Serial.println("--- States::STOP ---");
         this->stepper.stop();
+        vTaskDelay(1000);
+        this->setMotorStatus("IDLE");
         break;
     }
 

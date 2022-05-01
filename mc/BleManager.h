@@ -14,9 +14,6 @@ class BleManager {
   public:
     BleManager();
     void runLoop();
-
-    void handleMsg(std::string receivedMsg);
-    bool isDeviceConnected();
   private:
     enum class States {
       START_ADVERTISING,
@@ -25,15 +22,23 @@ class BleManager {
       DISCONNECTED
     };
     
+    uint32_t value;
     States currentState;
+    BaseType_t xStatus;
+    EncoderData_t encoderData;
+    MissionControlCommand_t missionControlCommand;
+    MotorActionCommand_t motorActionCommand;
+    
     BLEServer* pServer = NULL;
     BLEService* pService = NULL;
     BLECharacteristic* pTxCharacteristic = NULL;
     BLECharacteristic* pRxCharacteristic = NULL;
-
+    
     void init();
     void startAdvertising();
-    void notifyEncoder();  
+    void notifyEncoder();
+    void handleMsg(std::string receivedMsg);
+    bool isDeviceConnected();
 };
 
 
