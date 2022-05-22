@@ -2,6 +2,7 @@
 #define BLE_MANAGER_H
 
 #include "Init.h"
+#include "global.h"
 #include <Arduino.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
@@ -24,7 +25,6 @@ class BleManager {
     
     uint32_t value;
     States currentState;
-    BaseType_t xStatus;
     EncoderData_t encoderData;
     MissionControlCommand_t missionControlCommand;
     MotorActionCommand_t motorActionCommand;

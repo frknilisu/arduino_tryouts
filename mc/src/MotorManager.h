@@ -2,7 +2,9 @@
 #define MOTOR_MANAGER_H
 
 #include "Init.h"
+#include "global.h"
 #include <AccelStepper.h>
+#include <string>
 
 // Define the AccelStepper interface type
 #define MotorInterfaceType AccelStepper::DRIVER
@@ -34,6 +36,7 @@ class MotorManager {
     };
 
     uint32_t value;
+    bool hasNewNotify = false;
     AccelStepper stepper;
     States currentState = States::IDLE;
     StepType stepType;
@@ -42,7 +45,7 @@ class MotorManager {
     void init();
     void setStepResolution(StepType);
     void setMotorStatus(std::string stateName);
-    void getCurrentPosition();
+    int getCurrentPosition();
 };
 
 #endif

@@ -7,6 +7,13 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 std::string lastReceivedMsg;
 
+TaskHandle_t missionControlTaskHandle;
+TaskHandle_t bleTaskHandle;
+TaskHandle_t motorTaskHandle;
+TaskHandle_t encoderTaskHandle;
+QueueHandle_t qEncoderTask;
+BaseType_t xReturn;
+
 enum class BLEMsgsEnum {
   msg_StartProgramming,
   msg_FinishProgramming,
@@ -30,36 +37,37 @@ BLEMsgsEnum hashit(std::string const& inString) {
 /*--------------------------------------------------------------*/
 
 void BleManager::handleMsg(std::string receivedMsg) {
+  lastReceivedMsg = "";
   switch(hashit(receivedMsg)) {
     case BLEMsgsEnum::msg_StartProgramming:
       Serial.println("-- Received Msg: startProgramming --");
       missionControlCommand.cmd = Commands_t::START_PROGRAMMING_CMD;
-      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
+      xTaskNotify(missionControlTaskHandle, (uint32_t)(&missionControlCommand), eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_FinishProgramming:
       Serial.println("-- Received Msg: finishProgramming --");
       missionControlCommand.cmd = Commands_t::FINISH_PROGRAMMING_CMD;
-      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
+      xTaskNotify(missionControlTaskHandle, (uint32_t)(&missionControlCommand), eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_SetA:
       Serial.println("-- Received Msg: setA --");
       missionControlCommand.cmd = Commands_t::SET_A_CMD;
-      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
+      xTaskNotify(missionControlTaskHandle, (uint32_t)(&missionControlCommand), eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_SetB:
       Serial.println("-- Received Msg: setB --");
       missionControlCommand.cmd = Commands_t::SET_B_CMD;
-      xTaskNotify(missionControlTaskHandle, missionControlCommand, eSetValueWithOverwrite);
+      xTaskNotify(missionControlTaskHandle, (uint32_t)(&missionControlCommand), eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_MotorRun:
       Serial.println("-- Received Msg: motorRun --");
       motorActionCommand.cmd = Commands_t::MOTOR_RUN_CMD;
-      xTaskNotify(motorTaskHandle, motorActionCommand, eSetValueWithOverwrite);
+      xTaskNotify(motorTaskHandle, (uint32_t)(&motorActionCommand), eSetValueWithOverwrite);
       break;
     case BLEMsgsEnum::msg_MotorStop:
       Serial.println("-- Received Msg: motorStop --");
       motorActionCommand.cmd = Commands_t::MOTOR_STOP_CMD;
-      xTaskNotify(motorTaskHandle, motorActionCommand, eSetValueWithOverwrite);
+      xTaskNotify(motorTaskHandle, (uint32_t)(&motorActionCommand), eSetValueWithOverwrite);
       break;
   }
 }
@@ -142,10 +150,13 @@ void BleManager::startAdvertising() {
 }
 
 void BleManager::notifyEncoder() {
-  xStatus = xQueueReceive(encoderReadQueue, &value, pdMS_TO_TICKS(10));
+  Serial.println("## notifyEncoder() ##");
+  xReturn = xQueueReceive(qEncoderTask, &value, pdMS_TO_TICKS(10));
   if(xReturn == pdPASS) {
-    encoderData = (EncoderData_t)(value);
-    this->pTxCharacteristic->setValue(encoderData.absoluteStep);
+    Serial.println("pdPASS");
+    //encoderData = *(EncoderData_t*)(value);
+    int val = 10;
+    this->pTxCharacteristic->setValue(val);
     this->pTxCharacteristic->notify();
   }
 }

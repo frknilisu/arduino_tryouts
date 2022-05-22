@@ -1,4 +1,6 @@
 #include "EncoderManager.h"
+#include "global.h"
+#include <Wire.h>
 
 EncoderManager::EncoderManager() {
   Serial.println(">>>>>>>> EncoderManager() >>>>>>>>");
@@ -9,6 +11,7 @@ EncoderManager::EncoderManager() {
 void EncoderManager::init() {
   Serial.println(">>>>>>>> EncoderManager::init() >>>>>>>>");
   
+  Wire.begin(SDA, SCL);
   while(!this->ams5600.detectMagnet()) {
     delay(1000);
   }

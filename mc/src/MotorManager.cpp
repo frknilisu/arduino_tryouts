@@ -97,7 +97,7 @@ void MotorManager::runLoop() {
     xReturn = xTaskNotifyWait(0, 0, &value, pdMS_TO_TICKS(10));
     if(xReturn == pdTRUE) {
       hasNewNotify = true;
-      motorActionCommand = (MotorActionCommand_t)(value);
+      motorActionCommand = *(MotorActionCommand_t*)(value);
     } else {
       hasNewNotify = false;
     }
@@ -111,6 +111,7 @@ void MotorManager::runLoop() {
           } else if(motorActionCommand.cmd == Commands_t::MOTOR_START_ACTION_CMD) {
             // TODO
           }
+          hasNewNotify = false;
         }
         break;
       case States::RUN:
@@ -119,6 +120,7 @@ void MotorManager::runLoop() {
           if(motorActionCommand.cmd == Commands_t::MOTOR_STOP_CMD) {
             this->setMotorStatus("STOP");
           }
+          hasNewNotify = false;
         } else {
           if(stepper.distanceToGo() == 0) {
             stepper.moveTo(-stepper.currentPosition());
@@ -135,8 +137,8 @@ void MotorManager::runLoop() {
         break;
     }
 
-    Serial.println(this->getCurrentPosition());
+    //Serial.println(this->getCurrentPosition());
     
-    vTaskDelay(1);
+    vTaskDelay(1000);
   }
 }

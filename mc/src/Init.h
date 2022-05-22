@@ -12,13 +12,6 @@
 #define NO_INTERNET_CONNECTION_BIT      (0x01 << 2)
 #define CANNOT_LOCATE_CLOUD_SERVER_BIT  (0x01 << 3)
 
-TaskHandle_t missionControlTaskHandle;
-TaskHandle_t bleTaskHandle;
-TaskHandle_t motorTaskHandle;
-TaskHandle_t encoderTaskHandle;
-
-QueueHandle_t qEncoderTask;
-
 typedef struct EncoderData
 {
   uint32_t absoluteStep;

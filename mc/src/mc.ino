@@ -1,13 +1,21 @@
 #include "Init.h"
+#include "global.h"
 #include "BleManager.h"
-#include "EncoderManager.h"
+//#include "EncoderManager.h"
 #include "MotorManager.h"
-#include "MissionController.h"
+//#include "MissionController.h"
+
+//TaskHandle_t missionControlTaskHandle;
+//TaskHandle_t bleTaskHandle;
+//TaskHandle_t motorTaskHandle;
+//TaskHandle_t encoderTaskHandle;
+//QueueHandle_t qEncoderTask;
+//BaseType_t xReturn;
 
 BleManager* bleManager;
-EncoderManager* encoderManager;
+//EncoderManager* encoderManager;
 MotorManager* motorManager;
-MissionController* missionController;
+//MissionController* missionController;
 
 /*--------------------------------------------------*/
 /*---------------------- Tasks ---------------------*/
@@ -19,11 +27,13 @@ void TaskBLE(void* pvParameters) {
   bleManager->runLoop();
 }
 
+/*
 void TaskEncoder(void* pvParameters) {
   Serial.println("Starting Encoder Task...");
 
   encoderManager->runLoop();
 }
+*/
 
 void TaskMotor(void *pvParameters) {
   Serial.println("Starting Motor Driving Task...");
@@ -31,11 +41,13 @@ void TaskMotor(void *pvParameters) {
   motorManager->runLoop();
 }
 
+/*
 void TaskMissionControl(void *pvParameters) {
   Serial.println("Starting Mission Control Task...");
 
   missionController->runLoop();
 }
+*/
 
 /*--------------------------------------------------*/
 /*---------------------- Main ----------------------*/
@@ -43,10 +55,10 @@ void TaskMissionControl(void *pvParameters) {
 void setup() {
   Serial.begin(115200);
 
-  encoderManager = new EncoderManager();
+  //encoderManager = new EncoderManager();
   motorManager = new MotorManager();
   bleManager = new BleManager();
-  missionController = new MissionController();
+  //missionController = new MissionController();
 
   xTaskCreatePinnedToCore(
     TaskBLE
@@ -57,6 +69,7 @@ void setup() {
     ,  &bleTaskHandle
     ,  0);
 
+  /*
   xTaskCreatePinnedToCore(
     TaskEncoder
     ,  "TaskEncoder"
@@ -65,6 +78,7 @@ void setup() {
     ,  2
     ,  &encoderTaskHandle
     ,  0);
+  */
 
   xTaskCreatePinnedToCore(
     TaskMotor
@@ -75,6 +89,7 @@ void setup() {
     ,  &motorTaskHandle
     ,  1);
 
+  /*
   xTaskCreatePinnedToCore(
     TaskMissionControl
     ,  "TaskMissionControl"
@@ -83,6 +98,7 @@ void setup() {
     ,  2
     ,  &missionControlTaskHandle
     ,  1);
+  */
   
 }
 
